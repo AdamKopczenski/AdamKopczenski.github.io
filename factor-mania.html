@@ -39,6 +39,9 @@
     width: 45%;
     color: red;
   }
+  .gh-final-unclaimables  {
+    color: darkred;
+  }
   #main-area {
     margin-left: 15%;
     width: 100%;
@@ -190,18 +193,37 @@
     lossRecord.innerHTML = lostNumbers.join("<br/>");
     historyRow.appendChild(lossRecord);
 
+    var unclaimableNumbers = [];
+    var unclaimableSum = 0;
+    var anyAvailable = false;
     for (var i = 1; i <= gameData.numberMax; ++i) {
-      if (gameData.numberStates[i] == NumberState.AVAILABLE) {
-        var hasAFactor = false;
-        for(var j = 1; j < i && !hasAFactor; ++j) {
-          if (i % j == 0 && !NumberState.properties[gameData.numberStates[j]].fixed) {
-            hasAFactor = true;
+      switch (gameData.numberStates[i]) {
+        case NumberState.AVAILABLE:
+          var hasAFactor = false;
+          for(var j = 1; j < i && !hasAFactor; ++j) {
+            if (i % j == 0 && !NumberState.properties[gameData.numberStates[j]].fixed) {
+              hasAFactor = true;
+            }
           }
-        }
-        if (!hasAFactor) {
-          setNumberState(j, NumberState.UNCLAIMABLE);
-        }
+          if (hasAFactor) {
+            anyAvailable = true;
+          } else {
+            setNumberState(i, NumberState.UNCLAIMABLE);
+            unclaimableNumbers.push(i.toString());
+            unclaimableSum += i;
+          }
+          break;
+        case NumberState.UNCLAIMABLE:
+          unclaimableNumbers.push(i.toString());
+          unclaimableSum += i;
+          break;
       }
+    }
+    if(!anyAvailable) {
+      var finalUnclaimableHtml = "<br/><span class=\"gh-final-unclaimables\">" +
+        unclaimableNumbers.join("<br/>") + "</span>";
+      lossRecord.innerHTML += finalUnclaimableHtml;
+      gameData.lostTotal += unclaimableSum;
     }
 
     var totalRow = document.getElementById("gh-totals");
