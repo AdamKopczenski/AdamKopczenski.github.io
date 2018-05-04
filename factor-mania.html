@@ -106,7 +106,7 @@
     history: []
   }
 
-  const NUMBER_MAX = 10;
+  const NUMBER_MAX = 26;
 
   function startGame() {
     gameData.numberMax = NUMBER_MAX;
@@ -119,27 +119,31 @@
   }
 
   function buildClaimTable() {
-    tr = document.createElement("tr");
-    for(var i = 1; i <= gameData.numberMax; i++) {
-      if (i == 6) {
+    const CELLS_PER_ROW = 10;
+    const CELLS_BETWEEN_GAPS = 5;
+    for(var i = 1; i <= gameData.numberMax; i+= CELLS_PER_ROW) {
+      tr = document.createElement("tr");
+      for (var j = i; j < Math.min(gameData.numberMax + 1, i + CELLS_PER_ROW); ++j) {
+        if (j % CELLS_BETWEEN_GAPS == 1 && j != i) {
+          td = document.createElement("td");
+          td.className = "ct-spacer-column";
+          tr.appendChild(td);
+        }
         td = document.createElement("td");
-        td.className = "ct-spacer-column";
+        td.id = claimableNumberTdId(j);
+        td.className = NumberState.properties[gameData.numberStates[j]].ctClass;
+
+        div = document.createElement("div");
+        if (gameData.numberStates[j] == NumberState.AVAILABLE) {
+          div.setAttribute("onclick", "claimNumber(" + j.toString() + ")");
+        }
+        div.innerText = j.toString();
+        td.appendChild(div);
+
         tr.appendChild(td);
       }
-      td = document.createElement("td");
-      td.id = claimableNumberTdId(i)
-      td.className = NumberState.properties[gameData.numberStates[i]].ctClass;
-
-      div = document.createElement("div");
-      if (gameData.numberStates[i] == NumberState.AVAILABLE) {
-        div.setAttribute("onclick", "claimNumber(" + i.toString() + ")");
-      }
-      div.innerText = i.toString();
-
-      td.appendChild(div);
-      tr.appendChild(td);
-    }
     document.getElementById("claim-table").appendChild(tr);
+    }
   }
 
   function claimableNumberTdId(number) {
