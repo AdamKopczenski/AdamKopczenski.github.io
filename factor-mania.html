@@ -14,6 +14,7 @@
     overflow: auto;
   }
   #game-history {
+    width: 100%;
     table-layout: auto;
     text-align: right;
     border-collapse: collapse;
@@ -43,36 +44,39 @@
     width: 100%;
   }
   #claim-table {
+    width: 75%;
     table-layout: fixed;
     font-size: xx-large;
+    text-align: center;
     border-collapse: collapse;
-    width=100%;
   }
   .ct-available-number {
-    width=3*;
+    width: 9.6%;
+    padding: 5px;
   }
-  .ct-available-number span {
+  .ct-available-number div {
     border: 2px solid black;
+    width: 100%;
     border-radius: 5px;
   }
-  .ct-available-number span:hover {
+  .ct-available-number div:hover {
     font-weight: bold;
     color: green;
   }
   .ct-claimed-number {
-    width=3*;
+    width: 9.6%;
     color: green;
   }
   .ct-lost-number {
-    width=3*;
+    width: 9.6%;
     color: red;
   }
   .ct-unclaimable-number {
-    width=3*;
+    width: 9.6%;
     color: darkred;
   }
   .ct-spacer-column {
-    width=1*;
+    width: 4%;
   }
   </style>
 </head>
@@ -126,13 +130,13 @@
       td.id = claimableNumberTdId(i)
       td.className = NumberState.properties[gameData.numberStates[i]].ctClass;
 
-      span = document.createElement("span");
+      div = document.createElement("div");
       if (gameData.numberStates[i] == NumberState.AVAILABLE) {
-        span.setAttribute("onclick", "claimNumber(" + i.toString() + ")");
+        div.setAttribute("onclick", "claimNumber(" + i.toString() + ")");
       }
-      span.innerText = i.toString();
+      div.innerText = i.toString();
 
-      td.appendChild(span);
+      td.appendChild(div);
       tr.appendChild(td);
     }
     document.getElementById("claim-table").appendChild(tr);
