@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Factor Mania</title>
+  <style>
+  #history-panel {
+    margin: 0;
+    padding: 0;
+    width: 15%;
+    background-color: #f1f1f1;
+    height: 100%;
+    position: fixed;
+    overflow: auto;
+  }
+  #game-history {
+    table-layout: auto;
+    text-align: right;
+    border-collapse: collapse;
+  }
+  #game-history tr {
+    vertical-align: top;
+  }
+  #gh-totals {
+    font-weight: bold;
+  }
+  #gh-totals td {
+    border-top: 1px solid black;
+  }
+  .gh-label {
+    width: 10%;
+  }
+  .gh-claimed {
+    width: 45%;
+    color: green;
+  }
+  .gh-lost {
+    width: 45%;
+    color: red;
+  }
+  #main-area {
+    margin-left: 15%;
+    width: 100%;
+  }
+  #claim-table {
+    table-layout: fixed;
+    font-size: xx-large;
+    border-collapse: collapse;
+    width=100%;
+  }
+  .ct-available-number {
+    width=3*;
+  }
+  .ct-available-number span {
+    border: 2px solid black;
+    border-radius: 5px;
+  }
+  .ct-available-number span:hover {
+    font-weight: bold;
+    color: green;
+  }
+  .ct-claimed-number {
+    width=3*;
+    color: green;
+  }
+  .ct-lost-number {
+    width=3*;
+    color: red;
+  }
+  .ct-unclaimable-number {
+    width=3*;
+    color: darkred;
+  }
+  .ct-spacer-column {
+    width=1*;
+  }
+  </style>
+</head>
+<body onload="startGame()">
+  <script>
+  var NumberState = {
+    ZERO: 0,
+    AVAILABLE: 1,
+    CLAIMED: 2,
+    LOST: 3,
+    UNCLAIMABLE: 4,
+    properties: {
+      1: { ctClass: "ct-available-number", fixed: false },
+      2: { ctClass: "ct-claimed-number", fixed: true },
+      3: { ctClass: "ct-lost-number", fixed: true },
+      4: { ctClass: "ct-unclaimable-number", fixed: false }
+    }
+  };
+  if (Object.freeze)
+    Object.freeze(NumberState);
+
+  var gameData = {
+    numberMax: 0,
+    claimedTotal: 0,
+    lostTotal: 0,
+    numberStates: [],
+    history: []
+  }
+
+  const NUMBER_MAX = 10;
+
+  function startGame() {
+    gameData.numberMax = NUMBER_MAX;
+    gameData.numberStates = [NumberState.ZERO, NumberState.UNCLAIMABLE];
+    for(var i = 2; i <= gameData.numberMax; i++)
+      gameData.numberStates[i] = NumberState.AVAILABLE;
+
+    buildClaimTable();
+    updateGhTotals();
+  }
+
+  function buildClaimTable() {
+    tr = document.createElement("tr");
+    for(var i = 1; i <= gameData.numberMax; i++) {
+      if (i == 6) {
+        td = document.createElement("td");
+        td.className = "ct-spacer-column";
+        tr.appendChild(td);
+      }
+      td = document.createElement("td");
+      td.id = claimableNumberTdId(i)
+      td.className = NumberState.properties[gameData.numberStates[i]].ctClass;
+
+      span = document.createElement("span");
+      if (gameData.numberStates[i] == NumberState.AVAILABLE) {
+        span.setAttribute("onclick", "claimNumber(" + i.toString() + ")");
+      }
+      span.innerText = i.toString();
+
+      td.appendChild(span);
+      tr.appendChild(td);
+    }
+    document.getElementById("claim-table").appendChild(tr);
+  }
+
+  function claimableNumberTdId(number) {
+    return "claimable-number-" + number.toString();
+  }
+
+  function updateGhTotals() {
+    document.getElementById("gh-claimed-total").innerText = gameData.claimedTotal.toString();
+    document.getElementById("gh-lost-total").innerText = gameData.lostTotal.toString();
+  }
+
+  function setNumberState(number, state) {
+    var td = document.getElementById(claimableNumberTdId(number))
+    if (gameData.numberStates[number] == NumberState.AVAILABLE) {
+      td.firstChild.removeAttribute("onclick");
+    }
+
+    gameData.numberStates[number] = state;
+    td.className = NumberState.properties[gameData.numberStates[number]].ctClass;
+  }
+
+  function claimNumber(claimedNumber) {
+    console.log("Claiming number " + claimedNumber.toString());
+    var historyRow = document.createElement("tr");
+    historyRow.appendChild(document.createElement("td"));
+
+    setNumberState(claimedNumber, NumberState.CLAIMED);
+    gameData.claimedTotal += claimedNumber;
+    var claimRecord = document.createElement("td");
+    claimRecord.className = "gh-claimed";
+    claimRecord.innerText = claimedNumber.toString();
+    historyRow.appendChild(claimRecord);
+
+    var lostNumbers = [];
+    for (var i = 1; i < claimedNumber; ++i) {
+      if (claimedNumber % i == 0 && !NumberState.properties[gameData.numberStates[i]].fixed) {
+        setNumberState(i, NumberState.LOST);
+        gameData.lostTotal += i;
+        lostNumbers.push(i.toString());
+      }
+    }
+    var lossRecord = document.createElement("td");
+    lossRecord.className = "gh-lost";
+    lossRecord.innerHTML = lostNumbers.join("<br/>");
+    historyRow.appendChild(lossRecord);
+
+    for (var i = 1; i <= gameData.numberMax; ++i) {
+      if (gameData.numberStates[i] == NumberState.AVAILABLE) {
+        var hasAFactor = false;
+        for(var j = 1; j < i && !hasAFactor; ++j) {
+          if (i % j == 0 && !NumberState.properties[gameData.numberStates[j]].fixed) {
+            hasAFactor = true;
+          }
+        }
+        if (!hasAFactor) {
+          setNumberState(j, NumberState.UNCLAIMABLE);
+        }
+      }
+    }
+
+    var totalRow = document.getElementById("gh-totals");
+    totalRow.parentElement.insertBefore(historyRow, totalRow);
+    updateGhTotals();
+  }
+
+  </script>
+
+  <div id="history-panel">
+    <table id="game-history">
+      <tr id="gh-labels">
+        <td/>
+        <td class="gh-claimed">Claimed</td>
+        <td class="gh-lost">Lost</td>
+      </tr>
+      <tr id="gh-totals">
+        <td class="gh-label">&sum;</td>
+        <td id="gh-claimed-total" class="gh-claimed">
+          <!-- Set by updateGhTotals. -->
+        </td>
+        <td id="gh-lost-total" class="gh-lost">
+          <!-- Set by updateGhTotals. -->
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div id="main-area">
+    <table id="claim-table">
+      <!-- Contents inserted by buildClaimTable. -->
+    </table>
+  </div>
+</body>
+</html>
